@@ -225,6 +225,14 @@ router bgp 2042
 
 Связность есть.
 
+Для примера, приведу таблицу BGP и таблицу маршрутизации R14:
+
+![](https://github.com/dmitriyklimenkov/eBGP/blob/main/route%20table.PNG)
+
+![](https://github.com/dmitriyklimenkov/eBGP/blob/main/bgp%20table.PNG)
+
+Таблица BGP полностью на снимок не влезла.
+
 Полные конфигурации:
 
 
