@@ -1,0 +1,27 @@
+router bgp 520
+ bgp log-neighbor-changes
+ neighbor as520 peer-group
+ neighbor as520 remote-as 520
+ neighbor as520 update-source Loopback0
+ neighbor 200C:C0FE:1111:40::1 remote-as 301
+ neighbor 200C:C0FE:1111:50::1 remote-as 2042
+ neighbor 90.47.74.17 peer-group as520
+ neighbor 90.47.74.19 peer-group as520
+ neighbor 90.47.74.20 peer-group as520
+ neighbor 194.14.123.9 remote-as 2042
+ neighbor 194.14.123.22 remote-as 301
+ !
+ address-family ipv4
+  redistribute isis level-1-2
+  neighbor 90.47.74.17 activate
+  neighbor 90.47.74.19 activate
+  neighbor 90.47.74.20 activate
+  neighbor 194.14.123.9 activate
+  neighbor 194.14.123.22 activate
+ exit-address-family
+ !
+ address-family ipv6
+  neighbor 200C:C0FE:1111:40::1 activate
+  neighbor 200C:C0FE:1111:50::1 activate
+ exit-address-family
+!

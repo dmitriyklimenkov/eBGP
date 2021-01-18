@@ -1,0 +1,19 @@
+router bgp 1001
+ bgp log-neighbor-changes
+ neighbor 200C:C0FE:1111:20::2 remote-as 301
+ neighbor 152.95.25.1 remote-as 1001
+ neighbor 152.95.25.1 update-source loopback0
+ neighbor 194.14.123.6 remote-as 301
+ !
+ address-family ipv4
+  redistribute ospf 1
+  no neighbor 200C:C0FE:1111:20::2 activate
+  neighbor 152.95.25.1 activate
+  neighbor 152.95.25.1 next-hop-self
+  neighbor 194.14.123.6 activate
+ exit-address-family
+ !
+ address-family ipv6
+  neighbor 200C:C0FE:1111:20::2 activate
+ exit-address-family
+!
