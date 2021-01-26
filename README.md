@@ -16,7 +16,7 @@
 5. Все сети в лабораторной работе должны иметь IP связность.
 
 
-# Сначала настроим eBGP..
+# Сначала настроим eBGP.
 
 # 1. Настроика eBGP между офисом Москва и двумя провайдерами. Конфигурация R14, R15, R21, R22.
 Для примера приведу конфигурацию настройки eBGP на R15. Для начала необходимо запустить процесс BGP, затем настроить соседей. 
@@ -250,7 +250,7 @@ router bgp 2042
 
 ![](https://github.com/dmitriyklimenkov/eBGP/blob/main/route%20table.PNG)
 
-![](https://github.com/dmitriyklimenkov/eBGP/blob/main/bgp%20table.PNG)
+![](https://github.com/dmitriyklimenkov/eBGP/blob/main/bgp%20table%20R14.PNG)
 
 Таблица BGP полностью на снимок не влезла.
 
