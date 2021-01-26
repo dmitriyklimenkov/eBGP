@@ -169,7 +169,8 @@ router bgp 520
 На R24, R26 настройки аналогичные.
 
 # 3. Настройть офис Москва так, чтобы приоритетным провайдером стал Ламас.
-В данном случае, я на R15 прописал в сторону R14: neighbor 152.95.25.1 next-hop-self. Так же на R22 через route-map увеличил AS-Path.
+В данном случае, я на R15 прописал в сторону R14: neighbor 152.95.25.1 next-hop-self, через route-map увеличил атрибут local-preference до 150 в сторону R14. Так же на R22 через route-map увеличил AS-Path.
+Конфиг на R22:
 ```
 router bgp 101
  bgp log-neighbor-changes
@@ -190,6 +191,26 @@ route-map as1001 permit 10
  match ip address prefix-list as1001
  set as-path prepend 101 101
 !
+```
+Конфиг на R15:
+```
+router bgp 1001
+ bgp log-neighbor-changes
+ neighbor 152.95.25.1 remote-as 1001
+ neighbor 152.95.25.1 update-source loopback0
+ !
+ address-family ipv4
+  redistribute ospf 1
+  neighbor 152.95.25.1 activate
+  neighbor 152.95.25.1 next-hop-self
+  neighbor 152.95.25.1 route-map BGP_TRAF_IN out
+ exit-address-family
+ !
+ip prefix-list TRAF_IN seq 10 permit 0.0.0.0/0 le 32
+!
+route-map BGP_TRAF_IN permit 10
+ match ip address prefix-list TRAF_IN
+ set local-preference 150
 ```
 
 # 4. Настройть офис С.-Петербург так, чтобы трафик до любого офиса распределялся по двум линкам одновременно.
