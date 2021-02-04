@@ -200,7 +200,6 @@ router bgp 1001
  neighbor 152.95.25.1 update-source loopback0
  !
  address-family ipv4
-  redistribute ospf 1
   neighbor 152.95.25.1 activate
   neighbor 152.95.25.1 next-hop-self
   neighbor 152.95.25.1 route-map BGP_TRAF_IN out
@@ -240,37 +239,32 @@ router bgp 2042
 !
  ```
 
-# 5. Для проверки связности  запустим пинг от VPC1 из Москвы до VPC8 в Питере.
+# 5. Далее, чтобы не анонсировать внутренние маршруты, заведем отдельные сети в Москве и Питере, и будем анонсировать только их для проверки.
+На R15 на интерфейс Loopback0 повесим адрес:
+```
+!
+interface Loopback0
+ ip address 12.12.12.2 255.255.255.0
+ ipv6 address FE80::15 link-local
+ ipv6 enable
+!
+```
+И пропишем статический маршрут:
+```
+ip route 12.12.12.0 255.255.255.0 Null0
+```
+Анонсируем его:
+```
+router bgp 1001
+ address-family ipv4
+ network 12.12.12.0 mask 255.255.255.0
+```
 
-![](https://github.com/dmitriyklimenkov/eBGP/blob/main/%D0%BF%D0%B8%D0%BD%D0%B3.PNG)
+На R18 делаем аналогичные действия. Проверим, что приходит на R18:
 
-Связность есть.
+![](https://github.com/dmitriyklimenkov/eBGP/blob/main/R18%20BGP.PNG)
 
-Для примера, приведу таблицу BGP и таблицу маршрутизации R14:
+Видно, что с Москвы приходит только префикс, который анонсировали.
+Проверим связность:
 
-![](https://github.com/dmitriyklimenkov/eBGP/blob/main/route%20table.PNG)
-
-![](https://github.com/dmitriyklimenkov/eBGP/blob/main/bgp%20table%20R14.PNG)
-
-Таблица BGP полностью на снимок не влезла.
-
-Полные конфигурации:
-
-
-Файл конфигурации R14 [здесь](https://github.com/dmitriyklimenkov/eBGP/blob/main/R14.txt).
-
-Файл конфигурации R15 [здесь](https://github.com/dmitriyklimenkov/eBGP/blob/main/R15.txt).
-
-Файл конфигурации R18 [здесь](https://github.com/dmitriyklimenkov/eBGP/blob/main/R18.txt).
-
-Файл конфигурации R21 [здесь](https://github.com/dmitriyklimenkov/eBGP/blob/main/R21.txt).
-
-Файл конфигурации R22 [здесь](https://github.com/dmitriyklimenkov/eBGP/blob/main/R22.txt).
-
-Файл конфигурации R23 [здесь](https://github.com/dmitriyklimenkov/eBGP/blob/main/R23.txt).
-
-Файл конфигурации R24 [здесь](https://github.com/dmitriyklimenkov/eBGP/blob/main/R24.txt).
-
-Файл конфигурации R25 [здесь](https://github.com/dmitriyklimenkov/eBGP/blob/main/R25.txt).
-
-Файл конфигурации R26 [здесь](https://github.com/dmitriyklimenkov/eBGP/blob/main/R26.txt).
+![](https://github.com/dmitriyklimenkov/eBGP/blob/main/%D0%9F%D0%B8%D0%BD%D0%B3_R18.PNG)
