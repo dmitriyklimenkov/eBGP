@@ -268,3 +268,83 @@ router bgp 1001
 Проверим связность:
 
 ![](https://github.com/dmitriyklimenkov/eBGP/blob/main/%D0%9F%D0%B8%D0%BD%D0%B3_R18.PNG)
+
+# Далее настроим фильтрацию.
+
+# 1. Настроить фильтрацию в офисе Москва так, чтобы не появилось транзитного трафика (As-path).
+
+Необходимо на R14 настроить as-path access-list, чтобы анонсы, приходящие с R15 не передавались к R22.
+```
+!
+ip as-path access-list 1 deny _301_
+ip as-path access-list 1 permit .*
+!
+router bgp 1001
+ address-family ipv4
+  neighbor 194.14.123.2 filter-list 1 out
+```
+Соответственно, на R15 настроить так, чтобы анонсы от R14 не передавались к R21.
+```
+!
+ip as-path access-list 1 deny _101_
+ip as-path access-list 1 permit .*
+!
+router bgp 1001
+ address-family ipv4
+   neighbor 194.14.123.6 filter-list 1 out
+```
+
+# 2. Настроить фильтрацию в офисе С.-Петербург так, чтобы не появилось транзитного трафика (Prefix-list).
+
+Идея в том, чтобы префиксы с Москвы не принимались R18 через R26, а префиксы из Чокурдах не принимались R18 через R24. Для проверки я поднял BGP на R28.
+
+```
+!
+ip prefix-list CHOK seq 5 permit 0.0.0.0/0 le 32
+ip prefix-list CHOK seq 10 deny 201.193.45.0/24
+!
+ip prefix-list MOSC seq 5 permit 0.0.0.0/0 le 32
+ip prefix-list MOSC seq 10 deny 152.95.0.0/16 le 32
+!
+router bgp 2042
+ address-family ipv4
+  neighbor 194.14.123.10 activate
+  neighbor 194.14.123.10 prefix-list CHOK in
+  neighbor 194.14.123.14 activate
+  neighbor 194.14.123.14 prefix-list MOSC in
+```
+
+# 3. Настроить провайдера Киторн так, чтобы в офис Москва отдавался только маршрут по-умолчанию.
+
+Настроим с помощью prefix-list.
+```
+!
+ip prefix-list DEF seq 5 permit 0.0.0.0/0
+ip prefix-list DEF seq 10 deny 0.0.0.0/0 le 32
+!
+router bgp 101
+ address-family ipv4
+  neighbor 194.14.123.1 activate
+  neighbor 194.14.123.1 default-originate
+  neighbor 194.14.123.1 prefix-list DEF out
+```
+
+![](https://github.com/dmitriyklimenkov/eBGP/blob/main/R14_filer.PNG)
+
+# 4. Настроить провайдера Ламас так, чтобы в офис Москва отдавался только маршрут по-умолчанию и префикс офиса С.-Петербург.
+
+Настроим с помощью prefix-list.
+```
+!
+ip prefix-list DEFA seq 5 permit 0.0.0.0/0
+ip prefix-list DEFA seq 15 permit 11.11.11.0/24 le 32
+ip prefix-list DEFA seq 20 deny 0.0.0.0/0 le 32
+!
+router bgp 301
+ address-family ipv4
+  neighbor 194.14.123.5 activate
+  neighbor 194.14.123.5 default-originate
+  neighbor 194.14.123.5 prefix-list DEFA out
+```
+
+![](https://github.com/dmitriyklimenkov/eBGP/blob/main/R15_filer.PNG)
