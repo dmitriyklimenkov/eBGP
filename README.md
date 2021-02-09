@@ -273,25 +273,25 @@ router bgp 1001
 
 # 1. Настроить фильтрацию в офисе Москва так, чтобы не появилось транзитного трафика (As-path).
 
-Необходимо на R14 настроить as-path access-list, чтобы анонсы, приходящие с R15 не передавались к R22.
+Необходимо на R15 настроим as-path prefix-list и повесим в сторону R21.
+```
+router bgp 1001
+address-family ipv4
+  neighbor 194.14.123.6 filter-list 1 out
+!
+ip as-path access-list 1 permit ^$
+ip as-path access-list 1 deny .*
+! 
+```
+Соответственно R14: 
 ```
 !
-ip as-path access-list 1 deny _301_
-ip as-path access-list 1 permit .*
+ip as-path access-list 1 permit ^$
+ip as-path access-list 1 deny .*
 !
 router bgp 1001
  address-family ipv4
-  neighbor 194.14.123.2 filter-list 1 out
-```
-Соответственно, на R15 настроить так, чтобы анонсы от R14 не передавались к R21.
-```
-!
-ip as-path access-list 1 deny _101_
-ip as-path access-list 1 permit .*
-!
-router bgp 1001
- address-family ipv4
-   neighbor 194.14.123.6 filter-list 1 out
+   neighbor 194.14.123.2 filter-list 1 out
 ```
 
 # 2. Настроить фильтрацию в офисе С.-Петербург так, чтобы не появилось транзитного трафика (Prefix-list).
@@ -300,23 +300,21 @@ router bgp 1001
 
 ```
 !
-ip prefix-list CHOK seq 5 permit 0.0.0.0/0 le 32
-ip prefix-list CHOK seq 10 deny 201.193.45.0/24
+ip prefix-list OUT seq 5 permit 11.11.11.0/24
+ip prefix-list OUT seq 10 deny 0.0.0.0/0 le 32
 !
-ip prefix-list MOSC seq 5 permit 0.0.0.0/0 le 32
-ip prefix-list MOSC seq 10 deny 152.95.0.0/16 le 32
+route-map BGP_OUT permit 10
+ match ip address prefix-list OUT
 !
 router bgp 2042
  address-family ipv4
-  neighbor 194.14.123.10 activate
-  neighbor 194.14.123.10 prefix-list CHOK in
-  neighbor 194.14.123.14 activate
-  neighbor 194.14.123.14 prefix-list MOSC in
+  neighbor 194.14.123.10 route-map BGP_OUT out
+  neighbor 194.14.123.14 route-map BGP_OUT out
 ```
 
 # 3. Настроить провайдера Киторн так, чтобы в офис Москва отдавался только маршрут по-умолчанию.
 
-Настроим с помощью prefix-list.
+Настроим с помощью prefix-list и route-map.
 ```
 !
 ip prefix-list DEF seq 5 permit 0.0.0.0/0
@@ -327,6 +325,16 @@ router bgp 101
   neighbor 194.14.123.1 activate
   neighbor 194.14.123.1 default-originate
   neighbor 194.14.123.1 prefix-list DEF out
+```
+И на R14:
+```
+!
+ip prefix-list DEF1 seq 5 permit 0.0.0.0/0
+ip prefix-list DEF1 seq 10 deny 0.0.0.0/0 le 32
+!
+router bgp 1001
+ address-family ipv4
+  neighbor 194.14.123.2 prefix-list DEF1 in
 ```
 
 ![](https://github.com/dmitriyklimenkov/eBGP/blob/main/R14_filer.PNG)
@@ -347,6 +355,17 @@ router bgp 301
   neighbor 194.14.123.5 activate
   neighbor 194.14.123.5 default-originate
   neighbor 194.14.123.5 prefix-list DEFA out
+```
+И на R15:
+```
+!
+ip prefix-list DEFA1 seq 5 permit 0.0.0.0/0
+ip prefix-list DEFA1 seq 10 permit 11.11.11.0/24 le 32
+ip prefix-list DEFA1 seq 15 deny 0.0.0.0/0 le 32
+!
+router bgp 1001
+ address-family ipv4
+  neighbor 194.14.123.6 prefix-list DEF1 in
 ```
 
 ![](https://github.com/dmitriyklimenkov/eBGP/blob/main/R15_filer.PNG)
